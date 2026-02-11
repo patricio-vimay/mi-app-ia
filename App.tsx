@@ -1,11 +1,5 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { APP_TITLE, ENGLISH_SPEAKING_COUNTRIES } from './constants';
-import { CountryInfo, WebsiteData, GroundingSource } from './types';
-import { fetchTopWebsites } from './services/geminiService';
-import CountrySelector from './components/CountrySelector';
-import WebsiteCard from './components/WebsiteCard';
-import AnalyticsChart from './components/AnalyticsChart';
 
 const App: React.FC = () => {
   const [selectedCountry, setSelectedCountry] = useState<CountryInfo>(ENGLISH_SPEAKING_COUNTRIES[0]);
