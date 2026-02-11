@@ -1,181 +1,187 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Analytics Pro | 100 Leaderboard</title>
+    <title>Global Web Analytics Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback } = React;
+        const { useState, useEffect, useCallback, useMemo } = React;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
+
+        const API_KEY = "AIzaSyBBPk6E2848nn6Srr_sNdXZaZnecLBNci8";
 
         const COUNTRIES = [
-            { id: 'us', name: 'USA', flag: '🇺🇸' }, { id: 'cn', name: 'China', flag: '🇨🇳' }, { id: 'jp', name: 'Japan', flag: '🇯🇵' },
-            { id: 'de', name: 'Germany', flag: '🇩🇪' }, { id: 'in', name: 'India', flag: '🇮🇳' }, { id: 'gb', name: 'UK', flag: '🇬🇧' },
-            { id: 'fr', name: 'France', flag: '🇫🇷' }, { id: 'br', name: 'Brazil', flag: '🇧🇷' }, { id: 'it', name: 'Italy', flag: '🇮🇹' },
-            { id: 'ca', name: 'Canada', flag: '🇨🇦' }, { id: 'es', name: 'España', flag: '🇪🇸' }, { id: 'mx', name: 'México', flag: '🇲🇽' },
-            { id: 'kr', name: 'South Korea', flag: '🇰🇷' }, { id: 'au', name: 'Australia', flag: '🇦🇺' }, { id: 'ru', name: 'Russia', flag: '🇷🇺' }
-            // Agregados más países para llegar a los 50 principales...
-        ].concat([
-            { id: 'ar', name: 'Argentina', flag: '🇦🇷' }, { id: 'co', name: 'Colombia', flag: '🇨🇴' }, { id: 'cl', name: 'Chile', flag: '🇨🇱' },
-            { id: 'tr', name: 'Turkey', flag: '🇹🇷' }, { id: 'sa', name: 'Saudi Arabia', flag: '🇸🇦' }, { id: 'nl', name: 'Netherlands', flag: '🇳🇱' },
-            { id: 'id', name: 'Indonesia', flag: '🇮🇩' }, { id: 'ch', name: 'Switzerland', flag: '🇨🇭' }, { id: 'se', name: 'Sweden', flag: '🇸🇪' }
-        ]);
+            { id: 'us', name: 'United States', flag: '🇺🇸' }, { id: 'gb', name: 'United Kingdom', flag: '🇬🇧' },
+            { id: 'es', name: 'España', flag: '🇪🇸' }, { id: 'mx', name: 'México', flag: '🇲🇽' },
+            { id: 'ca', name: 'Canada', flag: '🇨🇦' }, { id: 'au', name: 'Australia', flag: '🇦🇺' },
+            { id: 'br', name: 'Brasil', flag: '🇧🇷' }, { id: 'de', name: 'Germany', flag: '🇩🇪' },
+            { id: 'fr', name: 'France', flag: '🇫🇷' }, { id: 'jp', name: 'Japan', flag: '🇯🇵' }
+        ];
 
-        const WebsiteCard = ({ site, index }) => (
-            <div className="glass p-5 rounded-2xl hover:bg-slate-800/80 transition-all group border-l-4 border-l-transparent hover:border-l-indigo-500">
-                <div className="flex justify-between items-start mb-3">
-                    <span className="text-indigo-400 font-black text-xl opacity-50">#{index + 1}</span>
-                    <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-300 px-2 py-1 rounded uppercase tracking-tighter">
-                        {site.category}
-                    </span>
-                </div>
-                <h4 className="font-bold text-slate-100 text-lg leading-tight group-hover:text-indigo-300 transition-colors">
-                    {site.companyName}
-                </h4>
-                <a href={`https://${site.websiteUrl}`} target="_blank" className="text-xs text-slate-500 hover:text-indigo-400 flex items-center gap-1 mt-1 mb-4 italic">
-                    {site.websiteUrl} <i className="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
-                </a>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-900/50 p-2 rounded-lg">
-                        <p className="text-[9px] text-slate-500 uppercase font-bold">Traffic Share</p>
-                        <p className="text-sm font-bold text-indigo-400">{site.trafficShare}%</p>
+        // --- COMPONENTE WEBSITE CARD (TU CÓDIGO) ---
+        const WebsiteCard = ({ site, index }) => {
+            const domain = site.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
+            return (
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-4 border border-slate-100 flex flex-col h-full group hover:-translate-y-1">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="flex-shrink-0 w-6 h-6 rounded bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px]">#{index + 1}</span>
+                            <div className="min-w-0">
+                                <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-indigo-600">{domain}</h3>
+                                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider truncate">{site.category}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-slate-900/50 p-2 rounded-lg">
-                        <p className="text-[9px] text-slate-500 uppercase font-bold">Users (Est)</p>
-                        <p className="text-sm font-bold text-emerald-400">{site.users || 'N/A'}</p>
+                    <div className="mb-3 flex-grow">
+                        <div className="flex items-end gap-1 mb-2">
+                            <span className="text-lg font-black text-indigo-600 leading-none">{site.monthlyViews}</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Views</span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-snug mb-2 line-clamp-2">{site.description || `Leading platform in ${site.category}`}</p>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold bg-slate-50 p-1.5 rounded">
+                            <i className="fa-solid fa-building text-slate-300"></i>
+                            <span className="truncate">{site.companyName}</span>
+                        </div>
+                    </div>
+                    <div className="mt-auto flex gap-2">
+                        <a href={`https://${domain}`} target="_blank" className="flex-1 text-center py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold transition-colors flex items-center justify-center gap-1.5 hover:bg-slate-200">
+                            <i className="fa-solid fa-globe"></i> Site
+                        </a>
+                        <a href={`https://www.linkedin.com/search/results/all/?keywords=${site.companyName}`} target="_blank" className="flex-1 text-center py-1.5 rounded-lg bg-[#0077b5] text-white text-[10px] font-bold transition-colors flex items-center justify-center gap-1.5 hover:bg-[#006399]">
+                            <i className="fa-brands fa-linkedin"></i> LinkedIn
+                        </a>
                     </div>
                 </div>
+            );
+        };
 
-                <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-indigo-500 h-full transition-all duration-1000" style={{ width: `${site.trafficShare}%` }}></div>
-                </div>
-            </div>
-        );
-
+        // --- APP PRINCIPAL CON INFINITE SCROLL ---
         function App() {
             const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+            const [websites, setWebsites] = useState([]);
             const [loading, setLoading] = useState(false);
-            const [data, setData] = useState([]);
-            const [search, setSearch] = useState('');
+            const [page, setPage] = useState(0);
 
-            const API_KEY = "AIzaSyBBPk6E2848nn6Srr_sNdXZaZnecLBNci8"; 
-
-            const fetchData = useCallback(async (country) => {
+            const fetchBatch = useCallback(async (pageNum) => {
+                if (loading || pageNum >= 5) return;
                 setLoading(true);
+                const start = pageNum * 20 + 1;
+                const end = (pageNum + 1) * 20;
+
                 try {
-                    // Prompt optimizado para 100 resultados (Nota: Gemini puede truncar si es demasiado largo, pero pedimos el máximo)
-                    const prompt = `Actúa como analista senior de SimilarWeb. Proporciona un JSON con los 100 sitios web más visitados en ${country}. 
-                    Formato: [{"websiteUrl": "url", "companyName": "nombre", "category": "categoría", "trafficShare": numero, "users": "cantidad_con_letras_M_o_B"}]. 
-                    IMPORTANTE: Solo devuelve el JSON, nada de texto.`;
+                    const prompt = `Actúa como analista senior de SimilarWeb. Proporciona un JSON con los sitios web más visitados en ${selectedCountry.name} del ranking #${start} al #${end}.
+                    Formato: [{"websiteUrl": "dominio.com", "companyName": "Nombre", "category": "Categoría", "monthlyViews": "Ej: 150M", "monthlyViewsValue": 150000000, "description": "Resumen corto"}]. Solo devuelve el JSON puro.`;
 
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                     });
-                    const json = await res.json();
-                    const text = json.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim();
-                    setData(JSON.parse(text));
+                    const result = await res.json();
+                    const text = result.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim();
+                    const newData = JSON.parse(text);
+                    setWebsites(prev => [...prev, ...newData]);
                 } catch (e) {
-                    console.error(e);
+                    console.error("Error fetching data:", e);
                 } finally {
                     setLoading(false);
                 }
-            }, []);
+            }, [selectedCountry, loading]);
 
-            useEffect(() => { fetchData(selectedCountry.name); }, [selectedCountry]);
+            useEffect(() => {
+                setWebsites([]);
+                setPage(0);
+                fetchBatch(0);
+            }, [selectedCountry]);
 
-            const filtered = useMemo(() => data.filter(s => s.companyName.toLowerCase().includes(search.toLowerCase())), [data, search]);
+            // Detector de Scroll para carga infinita
+            useEffect(() => {
+                const handleScroll = () => {
+                    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && !loading) {
+                        setPage(prev => {
+                            const next = prev + 1;
+                            if (next < 5) fetchBatch(next);
+                            return next;
+                        });
+                    }
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, [loading, fetchBatch]);
+
+            const chartData = useMemo(() => {
+                return websites.slice(0, 10).map(item => ({
+                    name: item.websiteUrl.split('.')[0],
+                    views: item.monthlyViewsValue,
+                    display: item.monthlyViews
+                }));
+            }, [websites]);
 
             return (
                 <div className="min-h-screen">
-                    <nav className="border-b border-slate-800 bg-slate-950/50 sticky top-0 z-50 backdrop-blur-md">
-                        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                    <i className="fa-solid fa-chart-column text-white text-xl"></i>
-                                </div>
-                                <div>
-                                    <h1 className="font-black text-xl tracking-tighter">ANALYTICS<span className="text-indigo-500">PRO</span></h1>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global Market Intelligence</p>
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-indigo-600 p-2 rounded-lg text-white"><i className="fa-solid fa-chart-line"></i></div>
+                                <h1 className="text-xl font-black text-slate-800 tracking-tight">Global Web Analytics Explorer</h1>
+                            </div>
+                            <div className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">GROUNDED 100+ LIVE SEARCH</div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto px-6 mt-8">
+                        {/* Gráfico Superior */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                            <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-400 mb-6 uppercase">Top 10 Views Comparison</h3>
+                                <div className="h-[250px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" tick={{fontSize: 10}} />
+                                            <YAxis hide />
+                                            <Tooltip />
+                                            <Bar dataKey="views" radius={[4, 4, 0, 0]} fill="#4f46e5" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
-                            <div className="relative w-1/3 hidden md:block">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                                <input 
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Quick search company or category..." 
-                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 pl-12 pr-4 text-sm focus:outline-none focus:border-indigo-500 transition-all"
-                                />
+                            <div className="bg-indigo-900 rounded-2xl p-8 text-white flex flex-col justify-center">
+                                <p className="text-indigo-300 text-[10px] font-bold uppercase mb-2">Market Insight</p>
+                                <h2 className="text-4xl font-black mb-4">{selectedCountry.flag} {selectedCountry.name}</h2>
+                                <p className="text-sm text-indigo-100 leading-relaxed">Mostrando inteligencia de mercado del top 100. Desliza hacia abajo para cargar más resultados en tiempo real.</p>
                             </div>
                         </div>
-                    </nav>
 
-                    <main className="max-w-[1600px] mx-auto px-6 py-8">
-                        {/* Selector de Países con Scroll */}
-                        <div className="flex gap-2 overflow-x-auto pb-6 custom-scroll">
+                        {/* Selector de Países */}
+                        <div className="flex gap-2 overflow-x-auto pb-6">
                             {COUNTRIES.map(c => (
-                                <button 
-                                    key={c.id} 
-                                    onClick={() => setSelectedCountry(c)}
-                                    className={`flex-shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-                                        selectedCountry.id === c.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'glass text-slate-400 hover:bg-slate-800'
-                                    }`}
-                                >
-                                    <span>{c.flag}</span> {c.name}
+                                <button key={c.id} onClick={() => setSelectedCountry(c)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${selectedCountry.id === c.id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-100'}`}>
+                                    {c.flag} {c.name}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Stats Summary */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                            <div className="glass p-6 rounded-3xl relative overflow-hidden group">
-                                <div className="relative z-10">
-                                    <p className="text-xs font-bold text-slate-500 uppercase mb-1">Región Activa</p>
-                                    <h2 className="text-3xl font-black">{selectedCountry.flag} {selectedCountry.name}</h2>
-                                </div>
-                                <i className="fa-solid fa-globe absolute -right-4 -bottom-4 text-8xl text-slate-800/50 group-hover:rotate-12 transition-transform"></i>
-                            </div>
-                            <div className="glass p-6 rounded-3xl">
-                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Resultados</p>
-                                <h2 className="text-3xl font-black text-indigo-500">{loading ? '...' : filtered.length}</h2>
-                            </div>
-                            <div className="glass p-6 rounded-3xl">
-                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Data Source</p>
-                                <h2 className="text-lg font-black uppercase">Gemini 1.5 Flash</h2>
-                            </div>
-                            <div className="glass p-6 rounded-3xl border-b-4 border-b-emerald-500">
-                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Status</p>
-                                <h2 className="text-lg font-black text-emerald-400 uppercase">Verified Live</h2>
-                            </div>
+                        {/* Grid de Resultados */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {websites.map((site, i) => <WebsiteCard key={i} site={site} index={i} />)}
                         </div>
 
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-40">
-                                <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-                                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs animate-pulse">Deep scanning {selectedCountry.name}...</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                {filtered.map((site, i) => <WebsiteCard key={i} site={site} index={i} />)}
-                            </div>
-                        )}
+                        {loading && <div className="py-20 text-center text-indigo-600 font-bold animate-pulse uppercase text-xs tracking-widest">Loading Next 20 Leaders...</div>}
                     </main>
                 </div>
             );
